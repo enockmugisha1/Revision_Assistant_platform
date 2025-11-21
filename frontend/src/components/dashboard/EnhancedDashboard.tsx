@@ -22,7 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import AIGeneratedQuiz from '../quizzes/AIGeneratedQuiz';
 import StudyAssistant from '../ai/StudyAssistant';
-import OllamaService from '../../services/ollamaService';
+import GroqService from '../../services/groqService';
 
 // Mock data - replace with real data from API
 const mockStats = {

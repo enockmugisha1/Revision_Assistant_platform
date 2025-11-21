@@ -8,7 +8,7 @@ import {
   DocumentTextIcon,
   ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
-import OllamaService from '../../services/ollamaService';
+import GroqService from '../../services/groqService';
 import { fetchBalancingStudies } from '../../services/balancingStudiesService';
 
 interface StudyAssistantProps {
@@ -76,10 +76,10 @@ const StudyAssistant: React.FC<StudyAssistantProps> = ({ onClose }) => {
     setResponse(null);
 
     try {
-      const result = await OllamaService.explainConcept(explainForm);
+      const result = await GroqService.explainConcept(explainForm);
       setResponse(result);
     } catch (err) {
-      setError('Failed to get explanation. Please ensure Ollama is running.');
+      setError('Failed to get explanation. Please ensure AI service is available.');
     } finally {
       setIsLoading(false);
     }
@@ -96,13 +96,13 @@ const StudyAssistant: React.FC<StudyAssistantProps> = ({ onClose }) => {
     setResponse(null);
 
     try {
-      const result = await OllamaService.generateStudyGuide({
+      const result = await GroqService.generateStudyGuide({
         ...guideForm,
         focusAreas: guideForm.focusAreas ? guideForm.focusAreas.split(',').map(s => s.trim()) : undefined
       });
       setResponse(result);
     } catch (err) {
-      setError('Failed to generate study guide. Please ensure Ollama is running.');
+      setError('Failed to generate study guide. Please ensure AI service is available.');
     } finally {
       setIsLoading(false);
     }
@@ -119,14 +119,14 @@ const StudyAssistant: React.FC<StudyAssistantProps> = ({ onClose }) => {
     setResponse(null);
 
     try {
-      const result = await OllamaService.createStudyPlan({
+      const result = await GroqService.createStudyPlan({
         ...planForm,
         subjects: planForm.subjects.split(',').map(s => s.trim()),
         goals: planForm.goals.split(',').map(s => s.trim())
       });
       setResponse(result);
     } catch (err) {
-      setError('Failed to create study plan. Please ensure Ollama is running.');
+      setError('Failed to create study plan. Please ensure AI service is available.');
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +144,7 @@ const StudyAssistant: React.FC<StudyAssistantProps> = ({ onClose }) => {
 
     try {
       // Simple chat implementation - you could enhance this with a proper chat API
-      const result = await OllamaService.explainConcept({
+      const result = await GroqService.explainConcept({
         concept: userMessage,
         subject: 'General',
         level: 'intermediate'
@@ -157,7 +157,7 @@ const StudyAssistant: React.FC<StudyAssistantProps> = ({ onClose }) => {
     } catch (err) {
       setChatHistory(prev => [...prev, { 
         role: 'assistant', 
-        content: 'I apologize, but I encountered an error. Please ensure Ollama is running and try again.' 
+        content: 'I apologize, but I encountered an error. Please ensure AI service is available and try again.' 
       }]);
     } finally {
       setIsLoading(false);

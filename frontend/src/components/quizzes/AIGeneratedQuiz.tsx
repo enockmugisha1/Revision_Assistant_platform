@@ -8,7 +8,7 @@ import {
   XCircleIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
-import OllamaService, { QuizGenerationRequest } from '../../services/ollamaService';
+import GroqService, { QuizGenerationRequest } from '../../services/groqService';
 
 interface AIGeneratedQuizProps {
   onQuizGenerated: (quiz: any) => void;
@@ -53,10 +53,10 @@ const AIGeneratedQuiz: React.FC<AIGeneratedQuizProps> = ({ onQuizGenerated, onCl
     setGeneratedQuiz(null);
 
     try {
-      const quiz = await OllamaService.generateQuiz(quizRequest);
+      const quiz = await GroqService.generateQuiz(quizRequest);
       setGeneratedQuiz(quiz);
     } catch (err) {
-      setError('Failed to generate quiz. Please ensure Ollama is running.');
+      setError('Failed to generate quiz. Please ensure AI service is available.');
     } finally {
       setIsGenerating(false);
     }

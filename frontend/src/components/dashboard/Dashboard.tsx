@@ -22,7 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import AIGeneratedQuiz from '../quizzes/AIGeneratedQuiz';
 import StudyAssistant from '../ai/StudyAssistant';
-import OllamaService from '../../services/ollamaService';
+import GroqService from '../../services/groqService';
 import DashboardService, { DashboardStats } from '../../services/dashboardService';
 
 export const Dashboard: React.FC = () => {
@@ -58,7 +58,7 @@ export const Dashboard: React.FC = () => {
 
   const checkAIConnection = async () => {
     try {
-      const isConnected = await OllamaService.checkConnection();
+      const isConnected = await GroqService.checkConnection();
       setAiConnectionStatus(isConnected ? 'connected' : 'disconnected');
     } catch (error) {
       setAiConnectionStatus('disconnected');
@@ -68,7 +68,7 @@ export const Dashboard: React.FC = () => {
   const loadAIFeatures = async () => {
     if (aiConnectionStatus === 'connected' && stats) {
       try {
-        const recommendations = await OllamaService.generateMotivationalMessage(
+        const recommendations = await GroqService.generateMotivationalMessage(
           `Completed ${stats.completedQuizzes} quizzes with ${stats.averageScore}% average`,
           user?.subjects?.[0]?.name || 'General'
         );

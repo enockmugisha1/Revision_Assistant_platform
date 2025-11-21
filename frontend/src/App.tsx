@@ -8,6 +8,7 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import VerifyEmail from './components/auth/VerifyEmail';
 import Dashboard from './components/dashboard/Dashboard';
+import ImprovedDashboard from './components/dashboard/ImprovedDashboard';
 import StudyGroupsPage from './components/study-groups/StudyGroupsPage';
 import GroupRoom from './components/study-groups/GroupRoom';
 import QuizzesPage from './components/quizzes/QuizzesPage';
@@ -55,7 +56,12 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     );
   }
 
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) {
+    console.log('[PublicRoute] User is authenticated, redirecting to dashboard');
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 // Landing Page Component
@@ -415,7 +421,7 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Dashboard />} />
+              <Route index element={<ImprovedDashboard />} />
             </Route>
             
             <Route

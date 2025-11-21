@@ -15,7 +15,7 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import OllamaService from '../../services/ollamaService';
+import GroqService from '../../services/groqService';
 
 interface SettingsSection {
   id: string;
@@ -181,11 +181,11 @@ const Settings: React.FC = () => {
 
   const checkAiConnection = async () => {
     try {
-      const isConnected = await OllamaService.checkConnection();
+      const isConnected = await GroqService.checkConnection();
       setAiConnectionStatus(isConnected ? 'connected' : 'disconnected');
       
       if (isConnected) {
-        const models = await OllamaService.getAvailableModels();
+        const models = await GroqService.getAvailableModels();
         setAvailableModels(models);
       }
     } catch (error) {
@@ -399,7 +399,7 @@ const Settings: React.FC = () => {
               value={selectedModel}
               onChange={(e) => {
                 setSelectedModel(e.target.value);
-                OllamaService.setModel(e.target.value);
+                // Model selection handled by backend
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >

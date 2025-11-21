@@ -66,9 +66,17 @@ export const Login: React.FC = () => {
     if (!validateForm()) { toast.error('Please fix the highlighted errors'); return; }
     setIsLoading(true);
     try {
+      console.log('[Login] Attempting login...');
       await login(formData);
-      navigate(from, { replace: true });
+      console.log('[Login] Login successful, navigating to:', from);
+      toast.success('Login successful!');
+      
+      // Small delay to ensure state updates
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
     } catch (error) {
+      console.error('[Login] Login error:', error);
       const msg = error instanceof Error ? error.message : 'Login failed';
       toast.error(msg);
     } finally {

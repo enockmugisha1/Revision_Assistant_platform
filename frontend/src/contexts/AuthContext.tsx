@@ -99,17 +99,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (loginData: LoginData): Promise<void> => {
     try {
+      console.log('[AuthContext] Login attempt starting...');
       dispatch({ type: 'AUTH_START' });
       // AuthService.login returns the payload (accessToken, refreshToken, user)
       const payload = await AuthService.login(loginData);
+      console.log('[AuthContext] Login response received:', payload ? 'Success' : 'Failed');
       if (payload && (payload as any).accessToken && (payload as any).user) {
         const { accessToken, refreshToken, user } = payload as AuthResponse;
         tokenManager.setTokens(accessToken, refreshToken);
+        console.log('[AuthContext] Tokens set, dispatching AUTH_SUCCESS', user);
         dispatch({ type: 'AUTH_SUCCESS', payload: user });
       } else {
         throw new Error('Login failed');
       }
     } catch (error) {
+      console.error('[AuthContext] Login error:', error);
       const message = error instanceof Error ? error.message : 'Login failed';
       dispatch({ type: 'AUTH_FAILURE', payload: message });
       throw error;

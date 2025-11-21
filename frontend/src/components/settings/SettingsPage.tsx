@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import aiService from '../../services/aiService';
 
-type Provider = 'ollama' | 'openai' | 'none';
+type Provider = 'groq' | 'openai' | 'none';
 
 interface ProviderModels {
   providers: {
-    ollama: { available: boolean; models: string[] };
+    groq: { available: boolean; models: string[] };
     openai: { available: boolean; models: string[] };
   };
   defaults: { provider: Provider; model: string };
@@ -68,20 +68,20 @@ const SettingsPage: React.FC = () => {
   }, [provider, model]);
 
   const providerOptions = useMemo(() => [
-    { id: 'ollama', label: 'Ollama (local)' },
+    { id: 'groq', label: 'Groq (cloud)' },
     { id: 'openai', label: 'OpenAI (cloud)' },
   ] as { id: Provider, label: string }[], []);
 
   const currentProviderAvailable = useMemo(() => {
     if (!modelsInfo) return false;
-    if (provider === 'ollama') return modelsInfo.providers.ollama.available;
+    if (provider === 'groq') return modelsInfo.providers.groq.available;
     if (provider === 'openai') return modelsInfo.providers.openai.available;
     return false;
   }, [modelsInfo, provider]);
 
   const availableModels = useMemo(() => {
     if (!modelsInfo) return [] as string[];
-    if (provider === 'ollama') return modelsInfo.providers.ollama.models;
+    if (provider === 'groq') return modelsInfo.providers.groq.models;
     if (provider === 'openai') return modelsInfo.providers.openai.models;
     return [];
   }, [modelsInfo, provider]);
@@ -119,8 +119,8 @@ const SettingsPage: React.FC = () => {
               onChange={(e) => setProvider(e.target.value as Provider)}
             >
               {providerOptions.map(opt => (
-                <option key={opt.id} value={opt.id} disabled={!modelsInfo ? true : !((opt.id === 'ollama' ? modelsInfo.providers.ollama.available : modelsInfo.providers.openai.available))}>
-                  {opt.label} {modelsInfo && !((opt.id === 'ollama' ? modelsInfo.providers.ollama.available : modelsInfo.providers.openai.available)) ? '(unavailable)' : ''}
+                <option key={opt.id} value={opt.id} disabled={!modelsInfo ? true : !((opt.id === 'groq' ? modelsInfo.providers.groq.available : modelsInfo.providers.openai.available))}>
+                  {opt.label} {modelsInfo && !((opt.id === 'groq' ? modelsInfo.providers.groq.available : modelsInfo.providers.openai.available)) ? '(unavailable)' : ''}
                 </option>
               ))}
             </select>
@@ -139,7 +139,7 @@ const SettingsPage: React.FC = () => {
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
-            <p className="text-xs text-secondary-500">If using Ollama, install and pull models locally. Default base URL is http://localhost:11434.</p>
+            <p className="text-xs text-secondary-500">Groq provides fast AI inference with various open-source models. API key is configured on the backend.</p>
           </div>
         </div>
       </div>

@@ -1,27 +1,39 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import OpenAI from 'openai';
-import axios from 'axios';
+import Groq from 'groq-sdk';
 
 const router = express.Router();
 
-// Ollama/OpenAI helpers
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+// Groq/OpenAI helpers
+const groqClient = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
-const fetchOllamaModels = async () => {
+const fetchGroqModels = async () => {
   try {
-    const resp = await axios.get(`${OLLAMA_BASE_URL}/api/tags`, { timeout: 5000 });
-    const models = Array.isArray(resp.data?.models) ? resp.data.models.map(m => m.name) : [];
+    if (!groqClient) return { available: false, models: [] };
+    // Groq supported models (updated list)
+    const models = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant', 
+      'llama3-70b-8192',
+      'mixtral-8x7b-32768', 
+      'gemma2-9b-it'
+    ];
     return { available: true, models };
   } catch (err) {
     return { available: false, models: [], error: err?.message };
   }
 };
 
-const generateWithOllama = async (model, prompt) => {
-  const body = { model, prompt, stream: false, options: { temperature: 0.2 } };
-  const resp = await axios.post(`${OLLAMA_BASE_URL}/api/generate`, body, { timeout: 30000 });
-  return resp.data?.response || '';
+const generateWithGroq = async (model, prompt) => {
+  if (!groqClient) throw new Error('Groq API key not configured');
+  const completion = await groqClient.chat.completions.create({
+    model: model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.2,
+    max_tokens: 2000
+  });
+  return completion.choices?.[0]?.message?.content || '';
 };
 
 // Core endpoints
@@ -43,16 +55,16 @@ const generateRecommendations = (req, res) => {
 
 const getModels = async (req, res) => {
   try {
-    const ollama = await fetchOllamaModels();
+    const groq = await fetchGroqModels();
     const openaiAvailable = !!process.env.OPENAI_API_KEY;
     const data = {
       providers: {
-        ollama: { available: ollama.available, models: ollama.models },
+        groq: { available: groq.available, models: groq.models },
         openai: { available: openaiAvailable, models: [] }
       },
       defaults: {
-        provider: ollama.available ? 'ollama' : (openaiAvailable ? 'openai' : 'none'),
-        model: ollama.available ? (process.env.OLLAMA_MODEL || (ollama.models[0] || 'mistral:latest')) : (process.env.OPENAI_MODEL || 'gpt-4o-mini')
+        provider: groq.available ? 'groq' : (openaiAvailable ? 'openai' : 'none'),
+        model: groq.available ? (process.env.GROQ_MODEL || (groq.models[0] || 'llama-3.3-70b-versatile')) : (process.env.OPENAI_MODEL || 'gpt-4o-mini')
       }
     };
     return res.json({ success: true, message: 'AI providers and models', data });
@@ -68,15 +80,15 @@ const getInstantFeedback = async (req, res) => {
   }
 
   try {
-    const chosenProvider = provider || (process.env.OPENAI_API_KEY ? 'openai' : 'ollama');
+    const chosenProvider = provider || (process.env.GROQ_API_KEY ? 'groq' : 'openai');
     const prompt = `Provide concise writing feedback for the following student draft. Return JSON with keys sentenceFeedback (array of brief suggestions) and holisticFeedback (one paragraph). Draft:\n\n${text}`;
     let content = '';
 
-    if (chosenProvider === 'ollama') {
-      const ollamaInfo = await fetchOllamaModels();
-      if (!ollamaInfo.available) throw new Error('Ollama is not available');
-      const selectedModel = model || process.env.OLLAMA_MODEL || ollamaInfo.models[0] || 'mistral:latest';
-      content = await generateWithOllama(selectedModel, prompt);
+    if (chosenProvider === 'groq') {
+      const groqInfo = await fetchGroqModels();
+      if (!groqInfo.available) throw new Error('Groq is not available');
+      const selectedModel = model || process.env.GROQ_MODEL || groqInfo.models[0] || 'llama-3.3-70b-versatile';
+      content = await generateWithGroq(selectedModel, prompt);
     } else {
       if (!process.env.OPENAI_API_KEY) throw new Error('Missing OPENAI_API_KEY');
       const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

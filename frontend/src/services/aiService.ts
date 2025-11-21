@@ -9,7 +9,7 @@ export const aiService = {
     const res = await apiGet('/ai/analysis');
     return res.data as any;
   },
-  feedback: async (text: string, provider?: 'ollama' | 'openai', model?: string) => {
+  feedback: async (text: string, provider?: 'groq' | 'openai', model?: string) => {
     const res = await apiPost('/ai/feedback', { text, provider, model });
     return res.data as any;
   },
