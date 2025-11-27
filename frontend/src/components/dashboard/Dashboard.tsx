@@ -66,23 +66,6 @@ export const Dashboard: React.FC = () => {
     localStorage.setItem('studentTasks', JSON.stringify(newTasks));
   };
 
-  const handleAddTask = (task: any) => {
-    const newTask = {
-      ...task,
-      id: Date.now().toString(),
-      completed: false
-    };
-    saveTasks([...tasks, newTask]);
-  };
-
-  const handleToggleTask = (taskId: string) => {
-    saveTasks(tasks.map(t => t.id === taskId ? {...t, completed: !t.completed} : t));
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    saveTasks(tasks.filter(t => t.id !== taskId));
-  };
-
   const loadDashboardData = async () => {
     try {
       setLoading(true);

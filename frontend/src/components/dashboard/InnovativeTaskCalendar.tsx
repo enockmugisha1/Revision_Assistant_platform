@@ -37,7 +37,7 @@ export const InnovativeTaskCalendar: React.FC<InnovativeTaskCalendarProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'list'>('month');
   const [showAddTask, setShowAddTask] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate] = useState<Date | null>(null);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
