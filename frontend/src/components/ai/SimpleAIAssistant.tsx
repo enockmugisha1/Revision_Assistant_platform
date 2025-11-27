@@ -40,37 +40,130 @@ const SimpleAIAssistant: React.FC = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      let response;
+      let response = '';
       
-      if (selectedAction === 'feedback') {
-        const result = await aiService.feedback(input, 'groq');
-        response = result.data?.holisticFeedback || 'No feedback available';
-      } else if (selectedAction === 'quiz') {
-        toast.info('Generating quiz...');
-        response = `Quiz generation requested for: "${input}". This feature will create a custom quiz based on your topic.`;
-      } else if (selectedAction === 'explain') {
-        const result = await aiService.feedback(`Explain this concept in simple terms: ${input}`, 'groq');
-        response = result.data?.holisticFeedback || 'Explanation not available';
-      } else {
-        const result = await aiService.feedback(input, 'groq');
-        response = result.data?.holisticFeedback || 'No response available';
-      }
+      if (selectedAction === 'chat') {
+        // Use streaming chat with Groq
+        const allMessages = [...messages, userMessage].map(m => ({
+          role: m.role,
+          content: m.content
+        }));
 
-      const aiMessage: Message = {
+        const streamResponse = await aiService.chat(allMessages, undefined, true);
+        
+        if (streamResponse instanceof Response) {
+          const reader = streamResponse.body?.getReader();
+          const decoder = new TextDecoder();
+
+          if (reader) {
+            const aiMessageId = (Date.now() + 1).toString();
+            let accumulatedContent = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data === '[DONE]') break;
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.content) {
+                      accumulatedContent += parsed.content;
+                      
+                      // Update or add AI message
+                      setMessages(prev => {
+                        const existingIndex = prev.findIndex(m => m.id === aiMessageId);
+                        if (existingIndex >= 0) {
+                          const updated = [...prev];
+                          updated[existingIndex] = {
+                            ...updated[existingIndex],
+                            content: accumulatedContent
+                          };
+                          return updated;
+                        } else {
+                          return [...prev, {
+                            id: aiMessageId,
+                            role: 'assistant',
+                            content: accumulatedContent,
+                            timestamp: new Date()
+                          }];
+                        }
+                      });
+                    }
+                  } catch (e) {
+                    // Skip invalid JSON
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (selectedAction === 'feedback') {
+        const result = await aiService.feedback(userInput, 'groq');
+        response = result.data?.holisticFeedback || 'No feedback available';
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: response,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      } else if (selectedAction === 'quiz') {
+        const result = await aiService.generateQuiz({
+          subject: 'General',
+          topic: userInput,
+          questionCount: 5,
+          level: 'intermediate'
+        });
+        response = `Quiz generated! Title: ${result.data?.title}\n\n${result.data?.questions?.length || 0} questions created.`;
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: response,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        toast.success('Quiz generated!');
+      } else if (selectedAction === 'explain') {
+        const result = await aiService.explainConcept({
+          concept: userInput,
+          subject: 'General',
+          level: 'intermediate'
+        });
+        response = result.data?.explanation?.definition || 'Explanation not available';
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: response,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to get AI response');
+      console.error('AI Error:', error);
+      
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response,
+        content: 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date()
       };
-
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
-      toast.error('Failed to get AI response');
-      console.error('AI Error:', error);
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }

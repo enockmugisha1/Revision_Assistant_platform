@@ -1,0 +1,162 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   🎓 EDUCATIONAL RESOURCES - QUICK START CARD                   ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ✅ WHAT'S ALREADY DONE                                           │
+└──────────────────────────────────────────────────────────────────┘
+
+✓ Backend API created: /api/educational-resources/search
+✓ Frontend React components ready
+✓ Your Search Engine IDs configured:
+  • YouTube CX: 66f89c62de83b4f14
+  • Notes CX: 4729b0f660b2e4e87
+✓ Test files ready
+✓ Documentation complete
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ⏳ WHAT YOU NEED TO DO (5 MINUTES)                               │
+└──────────────────────────────────────────────────────────────────┘
+
+1. Get Google API Key (FREE - 5 minutes):
+   → Go to: https://console.cloud.google.com/
+   → Create project → Enable "Custom Search API" → Create API key
+   → See: GET_GOOGLE_API_KEY.md for step-by-step guide
+
+2. Add API Key to Backend:
+   → Open: backend/.env
+   → Find: GOOGLE_SEARCH_API_KEY=YOUR_API_KEY_HERE
+   → Replace with: GOOGLE_SEARCH_API_KEY=AIzaSyAbc123...
+   → Save file
+
+3. Restart Backend:
+   → cd backend
+   → npm run dev
+
+4. Test It:
+   → ./test-educational-search.sh
+   OR
+   → Open: test-educational-resources.html in browser
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🧪 QUICK TEST COMMANDS                                           │
+└──────────────────────────────────────────────────────────────────┘
+
+# Check configuration
+curl "http://localhost:5000/api/educational-resources/test-config"
+
+# Search for photosynthesis
+curl "http://localhost:5000/api/educational-resources/search?query=photosynthesis"
+
+# Search in French
+curl "http://localhost:5000/api/educational-resources/search?query=équations&language=fr"
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📁 IMPORTANT FILES                                               │
+└──────────────────────────────────────────────────────────────────┘
+
+📖 Documentation:
+   EDUCATIONAL_RESOURCES_INTEGRATION_SUMMARY.md  ← Start here!
+   GET_GOOGLE_API_KEY.md                         ← Get API key guide
+   GOOGLE_API_SETUP.md                           ← Detailed setup
+   EDUCATIONAL_RESOURCES_GUIDE.md                ← Complete guide
+
+🔧 Backend:
+   backend/src/controllers/educationalResourcesController.js
+   backend/src/routes/educationalResourcesRoutes.js
+   backend/.env                                  ← Add your API key here!
+
+⚛️ Frontend:
+   frontend/src/services/educationalResourcesService.ts
+   frontend/src/components/resources/EducationalResourceSearch.tsx
+   frontend/src/components/resources/QuickSearchWidget.tsx
+
+🧪 Testing:
+   test-educational-resources.html               ← Open in browser
+   test-educational-search.sh                    ← Run test script
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 💰 COST: $0.00 (100% FREE!)                                     │
+└──────────────────────────────────────────────────────────────────┘
+
+✅ Khan Academy API:    FREE - Unlimited
+✅ Google Custom Search: FREE - 100 searches/day
+✅ YouTube Videos:       FREE - Included
+✅ Educational Notes:    FREE - Included
+
+After 100 searches/day: Wait for reset OR upgrade ($5/1000 queries)
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🎯 WHAT STUDENTS CAN SEARCH                                      │
+└──────────────────────────────────────────────────────────────────┘
+
+1. Khan Academy Videos & Exercises (Always first!)
+2. YouTube Educational Videos (Khan Academy, BYJU'S, Crash Course...)
+3. Educational Notes & PDFs (NCERT, CBSE, trusted sites)
+
+Languages: English, French, Hindi
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🚀 FRONTEND INTEGRATION                                          │
+└──────────────────────────────────────────────────────────────────┘
+
+Option 1 - Full Search Page:
+  import EducationalResourceSearch from './components/resources/EducationalResourceSearch';
+  
+  // Add route:
+  { path: '/resources/search', element: <EducationalResourceSearch /> }
+
+Option 2 - Dashboard Widget:
+  import QuickSearchWidget from './components/resources/QuickSearchWidget';
+  
+  // Add to dashboard:
+  <QuickSearchWidget onViewAll={() => navigate('/resources/search')} />
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ❓ TROUBLESHOOTING                                               │
+└──────────────────────────────────────────────────────────────────┘
+
+❌ YouTube/Notes disabled?
+   → Add Google API key to backend/.env
+   → Restart backend: cd backend && npm run dev
+
+❌ API key not working?
+   → Check it's copied correctly (no spaces)
+   → Wait 1-2 minutes after creating
+   → Verify "Custom Search API" is enabled
+
+❌ Backend won't start?
+   → cd backend
+   → npm install
+   → npm run dev
+   → Check logs for errors
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📞 SUPPORT                                                       │
+└──────────────────────────────────────────────────────────────────┘
+
+• Google API Setup: GET_GOOGLE_API_KEY.md
+• Full Guide: EDUCATIONAL_RESOURCES_INTEGRATION_SUMMARY.md
+• Test Script: ./test-educational-search.sh
+• Test Page: test-educational-resources.html
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ✨ YOU'RE READY!                                                 │
+└──────────────────────────────────────────────────────────────────┘
+
+Your Search Engine IDs are already configured! ✅
+Just add your Google API key and restart backend! 🚀
+
+Then your students can search thousands of FREE educational resources:
+  📚 Khan Academy videos
+  🎥 YouTube tutorials  
+  📄 Educational PDFs
+  ✏️ Practice exercises
+
+All in one search! 🎓
+
+═══════════════════════════════════════════════════════════════════
+Created with ❤️ for free education in Rwanda and India
+═══════════════════════════════════════════════════════════════════

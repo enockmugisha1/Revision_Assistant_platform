@@ -66,6 +66,83 @@ export const getProgressStats = async (req, res) => {
     );
     const todayStudyTime = todaySessions.reduce((sum, s) => sum + s.duration, 0);
 
+    // Calculate weekly study time (last 7 days)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const weeklySessions = progress.studySessions.filter(
+      session => session.startTime >= weekAgo
+    );
+    const weeklyStudyTime = weeklySessions.reduce((sum, s) => sum + s.duration, 0);
+
+    // Calculate monthly study time (last 30 days)
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const monthlySessions = progress.studySessions.filter(
+      session => session.startTime >= monthAgo
+    );
+    const monthlyStudyTime = monthlySessions.reduce((sum, s) => sum + s.duration, 0);
+
+    // Calculate current streak
+    const calculateStreak = () => {
+      if (progress.studySessions.length === 0) return 0;
+      
+      const sortedSessions = progress.studySessions
+        .map(s => new Date(s.startTime).setHours(0, 0, 0, 0))
+        .filter((v, i, a) => a.indexOf(v) === i) // unique dates
+        .sort((a, b) => b - a);
+      
+      if (sortedSessions.length === 0) return 0;
+      
+      const todayStart = new Date().setHours(0, 0, 0, 0);
+      const yesterdayStart = new Date(Date.now() - 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0);
+      
+      // Must have studied today or yesterday to have an active streak
+      if (sortedSessions[0] !== todayStart && sortedSessions[0] !== yesterdayStart) {
+        return 0;
+      }
+      
+      let streak = 0;
+      let currentDay = todayStart;
+      
+      for (const sessionDate of sortedSessions) {
+        if (sessionDate === currentDay) {
+          streak++;
+          currentDay -= 24 * 60 * 60 * 1000; // go back one day
+        } else if (sessionDate < currentDay) {
+          break; // gap in streak
+        }
+      }
+      
+      return streak;
+    };
+
+    const currentStreak = calculateStreak();
+
+    // Calculate longest streak
+    const calculateLongestStreak = () => {
+      if (progress.studySessions.length === 0) return 0;
+      
+      const uniqueDates = progress.studySessions
+        .map(s => new Date(s.startTime).setHours(0, 0, 0, 0))
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .sort((a, b) => a - b);
+      
+      let maxStreak = 1;
+      let currentStreak = 1;
+      
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const dayDiff = (uniqueDates[i] - uniqueDates[i - 1]) / (24 * 60 * 60 * 1000);
+        if (dayDiff === 1) {
+          currentStreak++;
+          maxStreak = Math.max(maxStreak, currentStreak);
+        } else {
+          currentStreak = 1;
+        }
+      }
+      
+      return maxStreak;
+    };
+
+    const longestStreak = calculateLongestStreak();
+
     // Get recent activity
     const recentActivity = [];
     
@@ -110,11 +187,11 @@ export const getProgressStats = async (req, res) => {
       success: true,
       data: {
         todayStudyTime,
-        weeklyStudyTime: progress.weeklyStudyTime || 0,
-        monthlyStudyTime: progress.monthlyStudyTime || 0,
+        weeklyStudyTime,
+        monthlyStudyTime,
         totalStudyTime: progress.totalStudyTime,
-        currentStreak: progress.streaks?.current?.days || 0,
-        longestStreak: progress.streaks?.longest?.days || 0,
+        currentStreak,
+        longestStreak,
         completedQuizzes: progress.assessmentResults?.length || 0,
         averageScore: Math.round(progress.overallAverage || 0),
         studyGroups: user.studyGroups?.length || 0,

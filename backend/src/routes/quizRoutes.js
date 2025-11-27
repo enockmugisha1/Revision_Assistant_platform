@@ -127,4 +127,32 @@ router.post('/:id/attempts', protect, async (req, res) => {
   }
 });
 
+// Delete quiz
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    
+    if (!quiz) {
+      return res.status(404).json({ success: false, message: 'Quiz not found' });
+    }
+
+    // Check if user owns the quiz or is admin
+    const isOwner = quiz.createdBy.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'teacher';
+    
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this quiz' });
+    }
+
+    // Soft delete - mark as inactive instead of removing
+    quiz.isActive = false;
+    await quiz.save();
+
+    res.json({ success: true, message: 'Quiz deleted successfully' });
+  } catch (e) {
+    console.error('Delete quiz error:', e);
+    res.status(500).json({ success: false, message: 'Failed to delete quiz' });
+  }
+});
+
 export default router;

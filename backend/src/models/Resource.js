@@ -99,7 +99,20 @@ const resourceSchema = new mongoose.Schema({
       type: String,
       default: 'English'
     }
-  }
+  },
+  aiGenerated: {
+    type: Boolean,
+    default: false
+  },
+  aiContent: {
+    type: mongoose.Schema.Types.Mixed
+  },
+  deepExplanation: {
+    type: String
+  },
+  relatedTopics: [String],
+  learningObjectives: [String],
+  prerequisites: [String]
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

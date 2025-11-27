@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Resources Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Educational Resources Search Test</h1>
+        
+        <!-- Search Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search Query</label>
+                <input 
+                    type="text" 
+                    id="searchQuery" 
+                    value="photosynthesis class 7"
+                    placeholder="e.g. 'photosynthesis class 7' or 'linear equations class 8'"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                <select 
+                    id="language"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                >
+                    <option value="en">English</option>
+                    <option value="fr">French</option>
+                    <option value="hi">Hindi</option>
+                </select>
+            </div>
+
+            <button 
+                onclick="searchResources()" 
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+            >
+                🔍 Search Resources
+            </button>
+
+            <button 
+                onclick="testConfig()" 
+                class="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition-colors"
+            >
+                🔧 Test Configuration
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="space-y-6"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+
+        async function testConfig() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="text-center py-4">Testing configuration...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/educational-resources/test-config`);
+                const data = await response.json();
+
+                resultsDiv.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4">Configuration Status</h2>
+                        <pre class="bg-gray-100 p-4 rounded overflow-auto">${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function searchResources() {
+            const query = document.getElementById('searchQuery').value;
+            const language = document.getElementById('language').value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!query.trim()) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="text-center py-8 text-gray-600">🔍 Searching...</div>';
+
+            try {
+                const response = await fetch(
+                    `${API_URL}/educational-resources/search?query=${encodeURIComponent(query)}&language=${language}`
+                );
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Search failed');
+                }
+
+                displayResults(data.results);
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            let html = '';
+
+            // Khan Academy Section
+            if (results.khanAcademy && results.khanAcademy.length > 0) {
+                html += `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-green-700 mb-4">📚 Khan Academy (${results.khanAcademy.length})</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${results.khanAcademy.map(resource => createResourceCard(resource)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // YouTube Section
+            if (results.youtube && results.youtube.length > 0) {
+                html += `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-red-700 mb-4">🎥 YouTube Videos (${results.youtube.length})</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${results.youtube.map(resource => createResourceCard(resource)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Educational Notes Section
+            if (results.educationalNotes && results.educationalNotes.length > 0) {
+                html += `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-blue-700 mb-4">📄 Notes & PDFs (${results.educationalNotes.length})</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${results.educationalNotes.map(resource => createResourceCard(resource)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // No Results
+            if (!html) {
+                html = `
+                    <div class="bg-gray-100 rounded-lg p-12 text-center">
+                        <div class="text-6xl mb-4">🔍</div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No results found</h3>
+                        <p class="text-gray-600">Try different keywords or check your spelling</p>
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        function createResourceCard(resource) {
+            const actionText = resource.type === 'video' ? '▶️ Watch' : 
+                             resource.type === 'pdf' ? '📥 Download' : 
+                             resource.type === 'exercise' ? '✏️ Practice' : 
+                             '📖 Read';
+
+            const sourceColor = resource.source === 'Khan Academy' ? 'bg-green-100 text-green-800' :
+                              resource.source === 'YouTube' ? 'bg-red-100 text-red-800' :
+                              'bg-blue-100 text-blue-800';
+
+            return `
+                <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div class="relative">
+                        <img 
+                            src="${resource.thumbnail}" 
+                            alt="${resource.title}"
+                            class="w-full h-40 object-cover"
+                            onerror="this.src='https://via.placeholder.com/400x300/4F46E5/FFFFFF?text=Resource'"
+                        />
+                        <span class="absolute top-2 right-2 ${sourceColor} text-xs font-semibold px-2 py-1 rounded-full">
+                            ${resource.source}
+                        </span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">${resource.title}</h3>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">${resource.description}</p>
+                        ${resource.channel ? `<p class="text-xs text-gray-500 mb-2">Channel: ${resource.channel}</p>` : ''}
+                        <a 
+                            href="${resource.url}" 
+                            target="_blank"
+                            class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition-colors"
+                        >
+                            ${actionText} →
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Auto-test on load
+        window.onload = () => {
+            console.log('Educational Resources Test Page Loaded');
+            console.log('Click "Test Configuration" to check API setup');
+            console.log('Click "Search Resources" to try a search');
+        };
+    </script>
+</body>
+</html>

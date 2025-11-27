@@ -39,6 +39,11 @@ export interface AttemptResult {
   correctAnswers: number;
   totalQuestions: number;
   passed: boolean;
+  feedback?: {
+    message: string;
+    level: string;
+    suggestions: string[];
+  };
   results: Array<{ questionId: string; isCorrect: boolean; earnedPoints: number; maxPoints: number }>
 }
 
@@ -61,6 +66,10 @@ export const QuizService = {
   submitAttempt: async (id: string, answers: any, timeSpentSeconds: number): Promise<AttemptResult> => {
     const res = await apiPost<AttemptResult>(`/quizzes/${id}/attempts`, { answers, timeSpent: timeSpentSeconds });
     return (res.data as any) as AttemptResult;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await apiDelete(`/quizzes/${id}`);
   }
 };
 

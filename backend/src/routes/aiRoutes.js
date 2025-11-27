@@ -5,13 +5,26 @@ import Groq from 'groq-sdk';
 
 const router = express.Router();
 
-// Groq/OpenAI helpers
-const groqClient = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+// Lazy-load Groq client to ensure env is loaded
+let groqClient = null;
+const getGroqClient = () => {
+  if (groqClient === null && process.env.GROQ_API_KEY) {
+    try {
+      groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+      console.log('✅ Groq client initialized successfully with key:', process.env.GROQ_API_KEY.substring(0, 10) + '...');
+    } catch (error) {
+      console.error('❌ Failed to initialize Groq client:', error.message);
+      groqClient = false; // Mark as failed
+    }
+  }
+  return groqClient || null;
+};
 
 const fetchGroqModels = async () => {
   try {
-    if (!groqClient) return { available: false, models: [] };
-    // Groq supported models (updated list)
+    const client = getGroqClient();
+    if (!client) return { available: false, models: [] };
+    // Groq supported models
     const models = [
       'llama-3.3-70b-versatile',
       'llama-3.1-8b-instant', 
@@ -25,15 +38,31 @@ const fetchGroqModels = async () => {
   }
 };
 
-const generateWithGroq = async (model, prompt) => {
-  if (!groqClient) throw new Error('Groq API key not configured');
-  const completion = await groqClient.chat.completions.create({
+// Generate with Groq (non-streaming)
+const generateWithGroq = async (model, prompt, messages = null) => {
+  const client = getGroqClient();
+  if (!client) throw new Error('Groq API key not configured');
+  const completion = await client.chat.completions.create({
     model: model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.2,
-    max_tokens: 2000
+    messages: messages || [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    max_tokens: 4096
   });
   return completion.choices?.[0]?.message?.content || '';
+};
+
+// Generate with Groq (streaming)
+const generateWithGroqStream = async (model, messages, temperature = 0.7) => {
+  const client = getGroqClient();
+  if (!client) throw new Error('Groq API key not configured');
+  return await client.chat.completions.create({
+    model: model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    messages: messages,
+    temperature: temperature,
+    max_tokens: 8192,
+    top_p: 1,
+    stream: true
+  });
 };
 
 // Core endpoints
@@ -70,6 +99,70 @@ const getModels = async (req, res) => {
     return res.json({ success: true, message: 'AI providers and models', data });
   } catch (err) {
     return res.status(500).json({ success: false, message: err?.message || 'Failed to get models' });
+  }
+};
+
+// Chat endpoint with streaming support
+const chat = async (req, res) => {
+  const { messages, model, stream = false } = req.body || {};
+  
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ success: false, message: 'Messages array is required' });
+  }
+
+  try {
+    const client = getGroqClient();
+    if (!client) {
+      return res.status(503).json({ success: false, message: 'Groq API not configured' });
+    }
+
+    const selectedModel = model || 'llama-3.3-70b-versatile';
+
+    if (stream) {
+      // Set headers for streaming - exactly like your example
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      const chatCompletion = await client.chat.completions.create({
+        messages: messages,
+        model: selectedModel,
+        temperature: 1,
+        max_completion_tokens: 1024,
+        top_p: 1,
+        stream: true,
+        stop: null
+      });
+
+      for await (const chunk of chatCompletion) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
+      }
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } else {
+      // Non-streaming response - exactly like your example but without stream
+      const chatCompletion = await client.chat.completions.create({
+        messages: messages,
+        model: selectedModel,
+        temperature: 1,
+        max_completion_tokens: 1024,
+        top_p: 1,
+        stream: false,
+        stop: null
+      });
+      
+      const content = chatCompletion.choices[0]?.message?.content || '';
+      return res.json({ success: true, data: { content } });
+    }
+  } catch (err) {
+    console.error('Chat error:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({ success: false, message: err?.message || 'Chat failed' });
+    }
   }
 };
 
@@ -153,37 +246,111 @@ const getTeacherOverview = (req, res) => {
 // Additional AI feature endpoints (mock implementations)
 router.post('/generate-quiz', protect, async (req, res) => {
   try {
-    const { subject, topic, level, questionCount, questionTypes, difficulty } = req.body;
+    const { subject, topic, level, questionCount = 5, questionTypes, difficulty } = req.body;
     if (!subject || !topic) {
       return res.status(400).json({ success: false, message: 'Subject and topic are required' });
     }
-    const mockQuiz = {
+
+    // Use the exact format from your example
+    const messages = [
+      {
+        role: "user",
+        content: `Hey can you give me ${questionCount} quiz questions about ${topic} in ${subject}? Make them ${level || 'intermediate'} level with ${difficulty || 'moderate'} difficulty.`
+      }
+    ];
+
+    const client = getGroqClient();
+    if (!client) {
+      return res.status(503).json({ success: false, message: 'Groq API not configured' });
+    }
+
+    // Call Groq exactly like your example
+    const chatCompletion = await client.chat.completions.create({
+      messages: messages,
+      model: "llama-3.3-70b-versatile",
+      temperature: 1,
+      max_completion_tokens: 2048,
+      top_p: 1,
+      stream: false,
+      stop: null
+    });
+
+    const content = chatCompletion.choices[0]?.message?.content || '';
+    
+    // Parse the response into quiz format
+    const questions = [];
+    const lines = content.split('\n');
+    let currentQuestion = null;
+    let questionNumber = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Check if this is a question line (starts with number)
+      if (/^\d+\./.test(line)) {
+        if (currentQuestion) {
+          questions.push(currentQuestion);
+        }
+        questionNumber++;
+        currentQuestion = {
+          id: questionNumber,
+          type: 'multiple_choice',
+          question: line.replace(/^\d+\.\s*/, ''),
+          options: [],
+          correctAnswer: '',
+          explanation: '',
+          points: 1
+        };
+      } else if (currentQuestion && line) {
+        // If line contains letters in parentheses like (a), (b), etc., it's likely an option
+        if (/^\(?[a-d]\)?/i.test(line)) {
+          currentQuestion.options.push(line.replace(/^\(?[a-d]\)?\s*/i, ''));
+        }
+      }
+    }
+    
+    if (currentQuestion) {
+      questions.push(currentQuestion);
+    }
+
+    // If no structured questions found, create from raw content
+    if (questions.length === 0) {
+      // Split content by common delimiters and create questions
+      const questionBlocks = content.split(/\n\n+/);
+      questionBlocks.forEach((block, index) => {
+        if (block.trim() && block.length > 20) {
+          questions.push({
+            id: index + 1,
+            type: 'essay',
+            question: block.trim(),
+            options: [],
+            correctAnswer: '',
+            explanation: 'Refer to study materials',
+            points: 1
+          });
+        }
+      });
+    }
+
+    const quiz = {
       title: `${subject} - ${topic} Quiz`,
-      description: `A ${level} level quiz about ${topic}`,
+      description: `A ${level || 'intermediate'} level quiz about ${topic}`,
       subject,
       topic,
       level,
       difficulty,
-      questions: [
-        {
-          id: 1,
-          type: 'multiple_choice',
-          question: `What is the main concept in ${topic}?`,
-          options: ['Option A', 'Option B', 'Option C', 'Option D'],
-          correctAnswer: 'Option A',
-          explanation: `This is the correct answer because...`,
-          points: 1
-        }
-      ],
-      totalPoints: questionCount,
+      questions: questions.slice(0, questionCount),
+      rawContent: content, // Include the full AI response
+      totalPoints: Math.min(questions.length, questionCount),
       timeLimit: 30,
       createdBy: req.user._id,
       aiGenerated: true
     };
-    res.json({ success: true, message: 'Quiz generated successfully', data: mockQuiz });
+    
+    res.json({ success: true, message: 'Quiz generated successfully', data: quiz });
   } catch (error) {
     console.error('Quiz generation error:', error);
-    res.status(500).json({ success: false, message: 'Failed to generate quiz' });
+    res.status(500).json({ success: false, message: error.message || 'Failed to generate quiz' });
   }
 });
 
@@ -193,41 +360,57 @@ router.post('/generate-study-guide', protect, async (req, res) => {
     if (!subject || !topic) {
       return res.status(400).json({ success: false, message: 'Subject and topic are required' });
     }
-    const mockGuide = {
+
+    const prompt = `Create a comprehensive study guide for "${topic}" in ${subject} at ${level || 'intermediate'} level.
+
+IMPORTANT: Return ONLY valid JSON, no markdown, no code blocks.
+
+Format:
+{
+  "overview": "Brief 2-3 sentence introduction",
+  "keyConcepts": ["Concept 1 with explanation", "Concept 2 with explanation", "Concept 3 with explanation"],
+  "examples": ["Practical example 1", "Practical example 2"],
+  "practiceProblems": ["Problem 1", "Problem 2", "Problem 3"],
+  "studyTips": ["Tip 1", "Tip 2", "Tip 3"]
+}
+
+Generate detailed, educational content. Return ONLY the JSON object.`;
+
+    const content = await generateWithGroq(null, prompt);
+    let cleanedContent = content.trim();
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.replace(/```\n?/g, '');
+    }
+    
+    let guideContent;
+    try {
+      guideContent = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.error('Failed to parse study guide:', parseError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to generate study guide',
+        debug: process.env.NODE_ENV === 'development' ? content : undefined
+      });
+    }
+
+    const guide = {
       title: `${subject} - ${topic} Study Guide`,
       subject,
       topic,
       level,
       format,
-      content: {
-        overview: `This study guide covers the essential concepts of ${topic} in ${subject}.`,
-        keyConcepts: [
-          'Concept 1: Definition and importance',
-          'Concept 2: Applications and examples',
-          'Concept 3: Common misconceptions'
-        ],
-        examples: [
-          'Example 1 with detailed explanation',
-          'Example 2 with step-by-step solution'
-        ],
-        practiceProblems: [
-          'Problem 1: Basic level',
-          'Problem 2: Intermediate level',
-          'Problem 3: Advanced level'
-        ],
-        studyTips: [
-          'Focus on understanding the fundamentals',
-          'Practice regularly with different types of problems',
-          'Review and reinforce your learning'
-        ]
-      },
+      content: guideContent,
       generatedAt: new Date(),
       generatedBy: req.user._id
     };
-    res.json({ success: true, message: 'Study guide generated successfully', data: mockGuide });
+    
+    res.json({ success: true, message: 'Study guide generated successfully', data: guide });
   } catch (error) {
     console.error('Study guide generation error:', error);
-    res.status(500).json({ success: false, message: 'Failed to generate study guide' });
+    res.status(500).json({ success: false, message: error.message || 'Failed to generate study guide' });
   }
 });
 
@@ -237,25 +420,57 @@ router.post('/explain-concept', protect, async (req, res) => {
     if (!concept || !subject) {
       return res.status(400).json({ success: false, message: 'Concept and subject are required' });
     }
-    const mockExplanation = {
+
+    const prompt = `Explain the concept of "${concept}" in ${subject} at ${level || 'intermediate'} level.
+${context ? `Context: ${context}` : ''}
+
+IMPORTANT: Return ONLY valid JSON, no markdown, no code blocks.
+
+Format:
+{
+  "definition": "Clear, concise definition (2-3 sentences)",
+  "keyPoints": ["Point 1", "Point 2", "Point 3"],
+  "examples": ["Real-world example 1", "Real-world example 2"],
+  "commonMisconceptions": ["Misconception 1 and correction", "Misconception 2 and correction"],
+  "furtherReading": ["Resource 1", "Resource 2"]
+}
+
+Return ONLY the JSON object.`;
+
+    const content = await generateWithGroq(null, prompt);
+    let cleanedContent = content.trim();
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.replace(/```\n?/g, '');
+    }
+    
+    let explanation;
+    try {
+      explanation = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.error('Failed to parse concept explanation:', parseError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to generate explanation',
+        debug: process.env.NODE_ENV === 'development' ? content : undefined
+      });
+    }
+
+    const result = {
       concept,
       subject,
       level,
       context,
-      explanation: {
-        definition: `${concept} is a fundamental concept in ${subject} that...`,
-        keyPoints: ['Point 1: Core understanding', 'Point 2: Practical applications', 'Point 3: Related concepts'],
-        examples: ['Real-world example 1', 'Real-world example 2'],
-        commonMisconceptions: ["Misconception 1 and why it's wrong", 'Misconception 2 and the correct understanding'],
-        furtherReading: ['Resource 1 for deeper understanding', 'Resource 2 for practical applications']
-      },
+      explanation,
       generatedAt: new Date(),
       generatedBy: req.user._id
     };
-    res.json({ success: true, message: 'Concept explanation generated successfully', data: mockExplanation });
+    
+    res.json({ success: true, message: 'Concept explanation generated successfully', data: result });
   } catch (error) {
     console.error('Concept explanation error:', error);
-    res.status(500).json({ success: false, message: 'Failed to generate concept explanation' });
+    res.status(500).json({ success: false, message: error.message || 'Failed to generate concept explanation' });
   }
 });
 
@@ -265,38 +480,63 @@ router.post('/generate-study-plan', protect, async (req, res) => {
     if (!subjects || !goals) {
       return res.status(400).json({ success: false, message: 'Subjects and goals are required' });
     }
+    
     const subjectsArray = Array.isArray(subjects) ? subjects : String(subjects).split(',').map(s => s.trim());
     const goalsArray = Array.isArray(goals) ? goals : String(goals).split(',').map(s => s.trim());
-    const mockPlan = {
+
+    const prompt = `Create a personalized study plan for a ${currentLevel || 'intermediate'} level student.
+Subjects: ${subjectsArray.join(', ')}
+Time Available: ${timeAvailable || 'Not specified'}
+Goals: ${goalsArray.join(', ')}
+Deadline: ${deadline || 'Not specified'}
+
+Provide:
+1. Weekly Schedule - Plan for each day (subjects, duration, activities)
+2. Milestones - 4 weekly milestones with goals and subjects
+3. Study Techniques - 4-5 recommended techniques
+4. Resources - 4-5 recommended resources
+
+Return JSON with keys: weeklySchedule (object with days), milestones (array), studyTechniques (array), resources (array).`;
+
+    const content = await generateWithGroq(null, prompt);
+    let plan;
+    try {
+      plan = JSON.parse(content);
+    } catch {
+      plan = {
+        weeklySchedule: {
+          monday: { subjects: subjectsArray.slice(0, 1), duration: 2, activities: ['Reading', 'Practice'] },
+          tuesday: { subjects: subjectsArray.slice(1, 2), duration: 1.5, activities: ['Video lessons', 'Quiz'] },
+          wednesday: { subjects: subjectsArray, duration: 2.5, activities: ['Study group', 'Review'] },
+          thursday: { subjects: subjectsArray.slice(1, 2), duration: 2, activities: ['Practice problems', 'Flashcards'] },
+          friday: { subjects: subjectsArray.slice(2), duration: 1.5, activities: ['Project work', 'Research'] },
+          saturday: { subjects: ['All subjects'], duration: 3, activities: ['Review', 'Practice tests'] },
+          sunday: { subjects: ['Weak areas'], duration: 2, activities: ['Focused study', 'Preparation'] }
+        },
+        milestones: [
+          { week: 1, goal: 'Complete basic concepts', subjects: subjectsArray.slice(0, 1) },
+          { week: 2, goal: 'Practice and reinforce', subjects: subjectsArray.slice(0, 2) },
+          { week: 3, goal: 'Advanced topics', subjects: subjectsArray },
+          { week: 4, goal: 'Review and assessment', subjects: ['All subjects'] }
+        ],
+        studyTechniques: ['Active recall', 'Spaced repetition', 'Practice testing', 'Interleaving'],
+        resources: ['Textbook chapters', 'Online video series', 'Practice problem sets', 'Study group discussions']
+      };
+    }
+
+    const result = {
       title: 'Personalized Study Plan',
       subjects: subjectsArray,
       timeAvailable,
       goals: goalsArray,
       deadline,
       currentLevel,
-      plan: {
-        weeklySchedule: {
-          monday: { subjects: ['Subject 1'], duration: 2, activities: ['Reading', 'Practice'] },
-          tuesday: { subjects: ['Subject 2'], duration: 1.5, activities: ['Video lessons', 'Quiz'] },
-          wednesday: { subjects: ['Subject 1', 'Subject 3'], duration: 2.5, activities: ['Study group', 'Review'] },
-          thursday: { subjects: ['Subject 2'], duration: 2, activities: ['Practice problems', 'Flashcards'] },
-          friday: { subjects: ['Subject 3'], duration: 1.5, activities: ['Project work', 'Research'] },
-          saturday: { subjects: ['All subjects'], duration: 3, activities: ['Review', 'Practice tests'] },
-          sunday: { subjects: ['Weak areas'], duration: 2, activities: ['Focused study', 'Preparation'] }
-        },
-        milestones: [
-          { week: 1, goal: 'Complete basic concepts', subjects: ['Subject 1'] },
-          { week: 2, goal: 'Practice and reinforce', subjects: ['Subject 1', 'Subject 2'] },
-          { week: 3, goal: 'Advanced topics', subjects: ['Subject 2', 'Subject 3'] },
-          { week: 4, goal: 'Review and assessment', subjects: ['All subjects'] }
-        ],
-        studyTechniques: ['Active recall', 'Spaced repetition', 'Practice testing', 'Interleaving'],
-        resources: ['Textbook chapters 1-5', 'Online video series', 'Practice problem sets', 'Study group discussions']
-      },
+      plan,
       generatedAt: new Date(),
       generatedBy: req.user._id
     };
-    res.json({ success: true, message: 'Study plan generated successfully', data: mockPlan });
+    
+    res.json({ success: true, message: 'Study plan generated successfully', data: result });
   } catch (error) {
     console.error('Study plan generation error:', error);
     res.status(500).json({ success: false, message: 'Failed to generate study plan' });
@@ -336,6 +576,7 @@ router.post('/analyze-progress', protect, async (req, res) => {
 });
 
 // Bind routes
+router.post('/chat', protect, chat);
 router.get('/models', protect, getModels);
 router.get('/analysis', protect, getAIAnalysis);
 router.post('/recommendations', protect, generateRecommendations);

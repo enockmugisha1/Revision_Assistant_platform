@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Educational Search - WORKS NOW!</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; background: #f9fafb; }
+        .result { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        button { padding: 10px 20px; background: #4F46E5; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #4338CA; }
+        input { padding: 10px; width: 400px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px; }
+        .loading { color: #666; padding: 15px; }
+        .error { color: #DC2626; background: #FEE2E2; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .success { color: #059669; background: #D1FAE5; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        h1 { color: #1F2937; }
+        h2 { color: #374151; margin-top: 30px; }
+        a { color: #4F46E5; text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Educational Resources Search</h1>
+    <p style="color: #6B7280;">Testing backend at <code>http://localhost:5000</code></p>
+    
+    <div style="margin: 20px 0;">
+        <input type="text" id="query" value="photosynthesis" placeholder="Enter search query">
+        <button onclick="search()">Search</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script>
+        async function search() {
+            const query = document.getElementById('query').value;
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.innerHTML = '<div class="loading">🔄 Searching...</div>';
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/educational-resources/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.innerHTML = `<div class="success">✅ Success! Found ${data.totalResults} results for "${query}"</div>`;
+                    
+                    let html = '';
+                    
+                    // Khan Academy
+                    if (data.results.khanAcademy.length > 0) {
+                        html += '<h2>📚 Khan Academy (' + data.results.khanAcademy.length + ')</h2>';
+                        data.results.khanAcademy.forEach(r => {
+                            html += `<div class="result">
+                                <strong style="font-size: 18px;">${r.title}</strong><br>
+                                <p style="color: #6B7280; margin: 8px 0;">${r.description}</p>
+                                <a href="${r.url}" target="_blank">Open on Khan Academy →</a>
+                            </div>`;
+                        });
+                    }
+                    
+                    // YouTube
+                    if (data.results.youtube.length > 0) {
+                        html += '<h2>🎥 YouTube Videos (' + data.results.youtube.length + ')</h2>';
+                        data.results.youtube.forEach(r => {
+                            html += `<div class="result">
+                                <strong style="font-size: 18px;">${r.title}</strong><br>
+                                <p style="color: #6B7280; margin: 8px 0;">${r.description}</p>
+                                <span style="color: #9CA3AF; font-size: 14px;">Channel: ${r.channel}</span><br>
+                                <a href="${r.url}" target="_blank">Watch on YouTube →</a>
+                            </div>`;
+                        });
+                    }
+                    
+                    // Educational Notes
+                    if (data.results.educationalNotes.length > 0) {
+                        html += '<h2>📄 Educational Notes (' + data.results.educationalNotes.length + ')</h2>';
+                        data.results.educationalNotes.forEach(r => {
+                            html += `<div class="result">
+                                <strong style="font-size: 18px;">${r.title}</strong><br>
+                                <p style="color: #6B7280; margin: 8px 0;">${r.description}</p>
+                                <span style="color: #9CA3AF; font-size: 14px;">Source: ${r.source}</span><br>
+                                <a href="${r.url}" target="_blank">Read More →</a>
+                            </div>`;
+                        });
+                    }
+                    
+                    if (html === '') {
+                        html = '<p style="color: #6B7280;">No results found. Try a different search term.</p>';
+                    }
+                    
+                    results.innerHTML = html;
+                } else {
+                    status.innerHTML = '<div class="error">❌ Search failed: ' + (data.message || 'Unknown error') + '</div>';
+                }
+            } catch (error) {
+                status.innerHTML = `<div class="error">
+                    ❌ Connection Error: ${error.message}<br><br>
+                    <strong>Make sure:</strong><br>
+                    1. Backend is running: <code>cd backend && npm run dev</code><br>
+                    2. Backend is accessible at: <code>http://localhost:5000</code>
+                </div>`;
+                console.error('Full error:', error);
+            }
+        }
+        
+        // Auto-search on load
+        window.onload = () => {
+            console.log('Testing educational resources search...');
+            search();
+        };
+    </script>
+    
+    <hr style="margin: 40px 0; border: none; border-top: 1px solid #E5E7EB;">
+    <div style="color: #6B7280; font-size: 14px;">
+        <strong>Quick Tests:</strong><br>
+        <button onclick="document.getElementById('query').value='photosynthesis'; search();" style="margin: 5px; font-size: 14px; padding: 8px 15px;">Photosynthesis</button>
+        <button onclick="document.getElementById('query').value='quadratic equations'; search();" style="margin: 5px; font-size: 14px; padding: 8px 15px;">Quadratic Equations</button>
+        <button onclick="document.getElementById('query').value='cell biology'; search();" style="margin: 5px; font-size: 14px; padding: 8px 15px;">Cell Biology</button>
+        <button onclick="document.getElementById('query').value='linear equations'; search();" style="margin: 5px; font-size: 14px; padding: 8px 15px;">Linear Equations</button>
+    </div>
+</body>
+</html>

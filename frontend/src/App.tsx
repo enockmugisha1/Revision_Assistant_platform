@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -7,10 +8,15 @@ import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import VerifyEmail from './components/auth/VerifyEmail';
+import EnhancedQuizPage from './components/quizzes/EnhancedQuizPage';
+import StudyTogetherHub from './components/social/StudyTogetherHub';
+import AnalyticsDashboard from './components/analytics/AnalyticsDashboard';
+import ImprovedStudyGroupsPage from './components/study-groups/ImprovedStudyGroupsPage';
+import GroupRoom from './components/study-groups/GroupRoom';
 import Dashboard from './components/dashboard/Dashboard';
 import ImprovedDashboard from './components/dashboard/ImprovedDashboard';
-import StudyGroupsPage from './components/study-groups/StudyGroupsPage';
-import GroupRoom from './components/study-groups/GroupRoom';
+import { VideoCallRoom } from './components/video/VideoCallRoom';
+import { PrivateMessaging } from './components/messaging/PrivateMessaging';
 import QuizzesPage from './components/quizzes/QuizzesPage';
 import TakeQuizPage from './components/quizzes/TakeQuizPage';
 import ProgressPage from './components/progress/ProgressPage';
@@ -21,6 +27,8 @@ import DraftPage from './components/writing/DraftPage';
 import TeacherDashboard from './components/teacher/TeacherDashboard';
 import RubricsPage from './components/teacher/RubricsPage';
 import Settings from "./components/settings/Settings";
+import TaskCalendarPage from './pages/TaskCalendarPage';
+
 // Protected Route component
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -371,6 +379,30 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 4000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <div className="App">
           <Routes>
             {/* Public routes */}
@@ -413,6 +445,7 @@ function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
             </Route>
             
+            {/* Main Dashboard - Role-Based */}
             <Route
               path="/dashboard"
               element={
@@ -421,7 +454,20 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<ImprovedDashboard />} />
+              <Route index element={<Dashboard />} />
+            </Route>
+            
+            {/* Quizzes with AI Integration */}
+            <Route
+              path="/quizzes/*"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<EnhancedQuizPage />} />
+              <Route path=":quizId/take" element={<TakeQuizPage />} />
             </Route>
             
             <Route
@@ -432,31 +478,56 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<StudyGroupsPage />} />
+              <Route index element={<ImprovedStudyGroupsPage />} />
               <Route path=":id" element={<GroupRoom />} />
             </Route>
             
+            {/* Video Call Room */}
             <Route
-              path="/quizzes"
+              path="/video-call/:roomId"
+              element={
+                <ProtectedRoute>
+                  <VideoCallRoom />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Private Messaging */}
+            <Route
+              path="/messages"
               element={
                 <ProtectedRoute>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<QuizzesPage />} />
-              <Route path=":id" element={<TakeQuizPage />} />
+              <Route index element={<PrivateMessaging />} />
             </Route>
             
+            {/* Study Together Hub (Social) */}
             <Route
-              path="/progress"
+              path="/social"
               element={
                 <ProtectedRoute>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<ProgressPage />} />
+              <Route index element={<StudyTogetherHub />} />
+            </Route>
+            
+            {/* Progress removed - now integrated in dashboard */}
+            
+            {/* Analytics Dashboard */}
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AnalyticsDashboard />} />
             </Route>
             
             <Route
@@ -504,6 +575,18 @@ function App() {
               }
             >
               <Route index element={<Settings />} />
+            </Route>
+            
+            {/* Task Calendar Page */}
+            <Route
+              path="/tasks"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<TaskCalendarPage />} />
             </Route>
             
             <Route

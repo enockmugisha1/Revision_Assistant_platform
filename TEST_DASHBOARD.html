@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Visual Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f3f4f6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .banner {
+            background: linear-gradient(to right, #2563eb, #9333ea, #ec4899);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .card {
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            min-height: 200px;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        .card-orange { background: linear-gradient(to bottom right, #f97316, #ef4444); }
+        .card-blue { background: linear-gradient(to bottom right, #3b82f6, #06b6d4); }
+        .card-green { background: linear-gradient(to bottom right, #10b981, #059669); }
+        .card-purple { background: linear-gradient(to bottom right, #a855f7, #ec4899); }
+        
+        .card-number {
+            font-size: 60px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .card-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .icon {
+            font-size: 48px;
+        }
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .action-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 2px solid #e5e7eb;
+        }
+        .button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 16px;
+        }
+        .button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 40px;">🎯 Dashboard Visual Test</h1>
+        
+        <div class="warning">
+            <h3>⚠️ Dashboard in Demo Mode</h3>
+            <p>Start using the app to see your real stats! Take a quiz or study to update these numbers.</p>
+        </div>
+
+        <div class="banner">
+            <h1 style="font-size: 48px; margin: 0 0 16px 0;">🎓 Student Dashboard</h1>
+            <p style="font-size: 24px; margin: 0;">Welcome back, Student! Ready to learn? 🚀</p>
+        </div>
+
+        <div class="grid">
+            <div class="card card-orange">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="icon">🔥</div>
+                    <div style="text-align: right;">
+                        <div class="card-number">0</div>
+                        <div class="card-subtitle">days</div>
+                    </div>
+                </div>
+                <div class="card-title">Study Streak 🔥</div>
+                <div class="card-subtitle">Start your streak today!</div>
+            </div>
+
+            <div class="card card-blue">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="icon">⏱️</div>
+                    <div style="text-align: right;">
+                        <div class="card-number">0</div>
+                        <div class="card-subtitle">hours</div>
+                    </div>
+                </div>
+                <div class="card-title">Study Time ⏱️</div>
+                <div class="card-subtitle">This month</div>
+            </div>
+
+            <div class="card card-green">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="icon">🎯</div>
+                    <div style="text-align: right;">
+                        <div class="card-number">0</div>
+                        <div class="card-subtitle">%</div>
+                    </div>
+                </div>
+                <div class="card-title">Quiz Score 🎯</div>
+                <div class="card-subtitle">0 quizzes done</div>
+            </div>
+
+            <div class="card card-purple">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="icon">🏆</div>
+                    <div style="text-align: right;">
+                        <div class="card-number">0</div>
+                        <div class="card-subtitle">badges</div>
+                    </div>
+                </div>
+                <div class="card-title">Achievements 🏆</div>
+                <div class="card-subtitle">Earned rewards</div>
+            </div>
+        </div>
+
+        <div class="action-grid">
+            <div class="action-card">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div class="icon">✨</div>
+                    <h3 style="margin: 0;">AI Quiz</h3>
+                </div>
+                <p style="color: #6b7280;">Generate personalized quizzes with AI</p>
+                <button class="button">Generate Now →</button>
+            </div>
+
+            <div class="action-card">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div class="icon">👥</div>
+                    <h3 style="margin: 0;">Study Groups</h3>
+                </div>
+                <p style="color: #6b7280;">Join or create study groups</p>
+                <button class="button" style="background: transparent; color: #2563eb; border: 2px solid #2563eb;">Explore Groups →</button>
+            </div>
+
+            <div class="action-card">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div class="icon">📚</div>
+                    <h3 style="margin: 0;">Resources</h3>
+                </div>
+                <p style="color: #6b7280;">Browse educational materials</p>
+                <button class="button" style="background: transparent; color: #2563eb; border: 2px solid #2563eb;">Browse Now →</button>
+            </div>
+        </div>
+
+        <div style="text-align: center; padding: 40px; background: white; border-radius: 16px;">
+            <h2 style="color: #1f2937; margin-bottom: 16px;">✅ Dashboard Test Complete!</h2>
+            <p style="color: #6b7280; font-size: 18px;">
+                If you can see colorful cards above, your dashboard WILL work!<br>
+                Go to <strong>http://localhost:3001</strong> and login to see your actual dashboard.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

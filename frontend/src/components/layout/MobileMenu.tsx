@@ -19,11 +19,9 @@ interface MobileMenuProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Study Groups', href: '/study-groups', icon: UserGroupIcon, badge: '3' },
   { name: 'Quizzes', href: '/quizzes', icon: AcademicCapIcon },
-  { name: 'Progress', href: '/progress', icon: ChartBarIcon },
   { name: 'Resources', href: '/resources', icon: BookOpenIcon },
-  { name: 'Help', href: '/help', icon: QuestionMarkCircleIcon },
+  { name: 'Study Groups', href: '/study-groups', icon: UserGroupIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 

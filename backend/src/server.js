@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -5,9 +9,8 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
-import { createServer } from 'http';
+import { createServer} from 'http';
 import { Server } from 'socket.io';
-import dotenv from 'dotenv';
 
 import connectDB from './config/database.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
@@ -21,10 +24,13 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import rubricRoutes from './routes/rubricRoutes.js';
 import classroomRoutes from './routes/classroomRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import educationalResourcesRoutes from './routes/educationalResourcesRoutes.js';
+import voiceRoutes from './routes/voiceRoutes.js';
+import socialRoutes from './routes/socialRoutes.js';
+import adaptiveRoutes from './routes/adaptiveRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
+import invitationRoutes from './routes/invitationRoutes.js';
 import { setupSocketIO } from './config/socket.js';
-
-// Load environment variables
-dotenv.config();
 
 // Build allowed origins list (supports comma-separated list)
 const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:3000,http://localhost:3001,http://localhost:3002')
@@ -107,6 +113,15 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api/rubrics', rubricRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/classrooms', classroomRoutes);
+app.use('/api/educational-resources', educationalResourcesRoutes);
+app.use('/api/voice', voiceRoutes);
+app.use('/api/social', socialRoutes);
+app.use('/api/adaptive', adaptiveRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/invitations', invitationRoutes);
+
+// Make io available to routes
+app.set('io', io);
 
 // Error Middleware
 app.use(notFound);

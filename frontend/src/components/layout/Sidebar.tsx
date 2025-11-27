@@ -8,9 +8,11 @@ import {
   ChartBarIcon,
   BookOpenIcon,
   Cog6ToothIcon,
-  QuestionMarkCircleIcon,
+  SparklesIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChatBubbleLeftIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePresence } from '../../contexts/PresenceContext';
@@ -22,12 +24,11 @@ interface SidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Study Groups', href: '/study-groups', icon: UserGroupIcon, badge: '3' },
-  { name: 'Quizzes', href: '/quizzes', icon: AcademicCapIcon },
-  { name: 'Progress', href: '/progress', icon: ChartBarIcon },
+  { name: 'Quizzes & AI', href: '/quizzes', icon: AcademicCapIcon },
+  { name: 'Task Calendar', href: '/tasks', icon: CalendarDaysIcon },
   { name: 'Resources', href: '/resources', icon: BookOpenIcon },
-  { name: 'Writing', href: '/writing', icon: BookOpenIcon },
-  { name: 'Help', href: '/help', icon: QuestionMarkCircleIcon },
+  { name: 'Study Groups', href: '/study-groups', icon: UserGroupIcon },
+  { name: 'Messages', href: '/messages', icon: ChatBubbleLeftIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 

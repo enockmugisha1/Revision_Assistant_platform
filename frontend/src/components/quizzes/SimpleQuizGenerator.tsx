@@ -44,32 +44,30 @@ const SimpleQuizGenerator: React.FC = () => {
         difficulty: 'medium'
       });
 
-      // Mock quiz generation if API fails
-      const mockQuiz: QuizQuestion[] = Array.from({ length: questionCount }, (_, i) => ({
-        question: `Question ${i + 1} about ${topic} in ${subject}?`,
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correctAnswer: Math.floor(Math.random() * 4),
-        explanation: `This is the explanation for question ${i + 1}.`
+      if (!response.data?.data?.questions || response.data.data.questions.length === 0) {
+        throw new Error('No questions generated');
+      }
+
+      // Parse AI-generated questions into proper format
+      const questions = response.data.data.questions.map((q: any, idx: number) => ({
+        question: q.question || `Question ${idx + 1}`,
+        options: q.options || ['Option A', 'Option B', 'Option C', 'Option D'],
+        correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 
+                      (q.options || []).findIndex((opt: string) => 
+                        opt.toLowerCase().includes(String(q.correctAnswer).toLowerCase())
+                      ),
+        explanation: q.explanation || 'Check your study materials for more information.'
       }));
 
-      setQuiz(response.data?.data?.questions || mockQuiz);
+      setQuiz(questions);
       setStep('quiz');
       setCurrentQuestion(0);
       setAnswers([]);
+      toast.success('🎉 AI generated your quiz!');
     } catch (error) {
       console.error('Quiz generation error:', error);
-      toast.error('Using sample quiz. Please check AI configuration.');
-      
-      // Fallback to sample quiz
-      const mockQuiz: QuizQuestion[] = Array.from({ length: questionCount }, (_, i) => ({
-        question: `Question ${i + 1} about ${topic} in ${subject}?`,
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correctAnswer: Math.floor(Math.random() * 4),
-        explanation: `This is the explanation for question ${i + 1}.`
-      }));
-      
-      setQuiz(mockQuiz);
-      setStep('quiz');
+      toast.error('Failed to generate quiz. Please try again.');
+      setStep('input');
     }
   };
 
