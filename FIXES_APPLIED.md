@@ -170,7 +170,7 @@ http://localhost:5173
 1. **Check API Key:**
    ```bash
    # Backend .env should have:
-   GROQ_API_KEY=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
+   GROQ_API_KEY=your_groq_api_key_here
    ```
 
 2. **Check Backend Logs:**
